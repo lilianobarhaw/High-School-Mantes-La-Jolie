@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fais le bon choix</title>
+<style>
+  /* ============================================================
+     DONNÉES À MODIFIER CHAQUE SEMAINE : voir le bloc JS tout en
+     bas du fichier (const choix = [...]). Rien d'autre à toucher.
+     ============================================================ */
+
+  @font-face {
+    font-family: 'Fraunces';
+    src: local('Georgia');
+  }
+
+  :root{
+    --bg: #12100d;
+    --bg-soft: #1c1914;
+    --paper: #efe7d8;
+    --paper-dim: #cabfa8;
+    --accent: #c96a3c;
+    --accent-soft: #7c5237;
+    --line: rgba(239,231,216,0.14);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0;
+    min-height:100%;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at 20% -10%, rgba(201,106,60,0.10), transparent 55%),
+      radial-gradient(ellipse at 90% 110%, rgba(201,106,60,0.06), transparent 50%);
+    color: var(--paper);
+    font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 8vh 6vw;
+  }
+
+  .scene{
+    width:100%;
+    max-width: 760px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .kicker{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin: 0 0 0.9rem 0;
+  }
+
+  h1{
+    font-size: clamp(2.1rem, 5vw, 3.2rem);
+    font-weight: 400;
+    line-height: 1.08;
+    text-align:center;
+    margin: 0 0 0.6rem 0;
+    letter-spacing: -0.01em;
+  }
+
+  h1 em{
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .sub{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.95rem;
+    color: rgba(239,231,216,0.55);
+    text-align:center;
+    margin: 0 0 3.2rem 0;
+    max-width: 32ch;
+  }
+
+  .choices{
+    display:flex;
+    gap: 1.1rem;
+    width:100%;
+    flex-wrap: wrap;
+    justify-content:center;
+  }
+
+  .choice{
+    position:relative;
+    flex: 1 1 190px;
+    max-width: 230px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 1.8rem 1.3rem;
+    cursor:pointer;
+    text-align:center;
+    transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease;
+    font-family: inherit;
+    color: var(--paper);
+  }
+
+  .choice:hover{
+    border-color: var(--accent-soft);
+    transform: translateY(-2px);
+  }
+
+  .choice:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .choice .num{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    color: rgba(239,231,216,0.4);
+    display:block;
+    margin-bottom: 0.7rem;
+  }
+
+  .choice .nom{
+    font-size: 1.35rem;
+    font-style: italic;
+  }
+
+  .choice.selected{
+    border-color: var(--accent);
+    background: linear-gradient(180deg, rgba(201,106,60,0.10), var(--bg-soft));
+  }
+
+  .choice.gone{
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+    pointer-events: none;
+  }
+
+  .choice.selected.locked{
+    cursor: default;
+  }
+
+  /* ---------- écran mot de passe ---------- */
+  .gate{
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 6vw;
+    z-index: 10;
+    transition: opacity 0.5s ease;
+  }
+
+  .gate.hidden{
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .gate-kicker{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin: 0 0 0.9rem 0;
+  }
+
+  .gate h2{
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-weight: 400;
+    margin: 0 0 2rem 0;
+    text-align:center;
+  }
+
+  .gate form{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .gate input{
+    width: 100%;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.85rem 1rem;
+    color: var(--paper);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    text-align:center;
+  }
+
+  .gate input:focus{
+    outline: none;
+    border-color: var(--accent-soft);
+  }
+
+  .gate button{
+    width:100%;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.8rem 1rem;
+    color: var(--paper);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .gate button:hover{
+    background: var(--accent);
+  }
+
+  .gate .error{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.78rem;
+    color: #d97757;
+    height: 1rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .gate .error.show{
+    opacity: 1;
+  }
+
+  .gate.shake form{
+    animation: shake 0.35s ease;
+  }
+
+  @keyframes shake{
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .reveal{
+    width:100%;
+    margin-top: 2.4rem;
+    border-top: 1px solid var(--line);
+    padding-top: 2.2rem;
+    text-align:center;
+    min-height: 3.4rem;
+  }
+
+  .reveal .label{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin: 0 0 0.7rem 0;
+    opacity:0;
+    transition: opacity 0.4s ease;
+  }
+
+  .reveal .phrase{
+    font-size: clamp(1.15rem, 3vw, 1.5rem);
+    font-style: italic;
+    line-height: 1.5;
+    max-width: 42ch;
+    margin: 0 auto;
+    opacity:0;
+    transform: translateY(6px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+
+  .reveal.show .label,
+  .reveal.show .phrase{
+    opacity:1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .choice, .reveal .label, .reveal .phrase{ transition: none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="gate" id="gate">
+    <p class="gate-kicker">ACCÈS RESTREINT</p>
+    <h2>Entre le code.</h2>
+    <form id="gate-form">
+      <input type="password" id="gate-input" autocomplete="off" placeholder="••••••••" inputmode="numeric">
+      <p class="error" id="gate-error">Code incorrect.</p>
+      <button type="submit">Entrer</button>
+    </form>
+  </div>
+
+  <div class="scene">
+    <p class="kicker">TROIS NOMS, UN SEUL À CHOISIR</p>
+    <h1>Fais le <em>bon</em> choix.</h1>
+    <p class="sub">Chaque nom cache une information. Une seule façon de savoir laquelle.</p>
+
+    <div class="choices" id="choices"></div>
+
+    <div class="reveal" id="reveal">
+      <p class="label">INFORMATION</p>
+      <p class="phrase" id="phrase"></p>
+    </div>
+  </div>
+
+<script>
+  // ============================================================
+  //  À MODIFIER CHAQUE SEMAINE : change juste les valeurs ici.
+  //  "nom"   -> le nom affiché sur la carte
+  //  "info"  -> la phrase révélée au clic
+  // ============================================================
+  const choix = [
+    { nom: "Zack",              info: "Remplace cette phrase par l'information capitale de Zack." },
+    { nom: "Riju",               info: "Remplace cette phrase par l'information capitale de Riju." },
+    { nom: "Mme Cristofeuille",  info: "Remplace cette phrase par l'information capitale de Mme Cristofeuille." },
+  ];
+
+  // Mot de passe pour accéder au site
+  const motDePasse = "15051991";
+  // ============================================================
+
+  // ---------- écran mot de passe ----------
+  const gate = document.getElementById('gate');
+  const gateForm = document.getElementById('gate-form');
+  const gateInput = document.getElementById('gate-input');
+  const gateError = document.getElementById('gate-error');
+
+  gateForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (gateInput.value.trim() === motDePasse) {
+      gate.classList.add('hidden');
+      gateError.classList.remove('show');
+    } else {
+      gateError.classList.add('show');
+      gate.classList.remove('shake');
+      void gate.offsetWidth;
+      gate.classList.add('shake');
+      gateInput.value = '';
+      gateInput.focus();
+    }
+  });
+
+  // ---------- les trois choix ----------
+  const container = document.getElementById('choices');
+  const reveal = document.getElementById('reveal');
+  const phraseEl = document.getElementById('phrase');
+  let choixFait = false;
+
+  choix.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.innerHTML = `<span class="num">0${i+1}</span><span class="nom">${c.nom}</span>`;
+    btn.addEventListener('click', () => {
+      if (choixFait) return; // aucun retour en arrière possible
+      choixFait = true;
+
+      document.querySelectorAll('.choice').forEach(el => {
+        if (el === btn) {
+          el.classList.add('selected', 'locked');
+        } else {
+          el.classList.add('gone');
+        }
+      });
+
+      reveal.classList.remove('show');
+      phraseEl.textContent = c.info;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        reveal.classList.add('show');
+      }));
+    });
+    container.appendChild(btn);
+  });
+</script>
+
+</body>
+</html>
