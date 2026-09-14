@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PC de Rick Michel</title>
+<style>
+  /* ============================================================
+     DONNÉES À MODIFIER : tout en bas du fichier, dans le bloc
+     JS "const dossiers = {...}". Rien d'autre à toucher.
+     ============================================================ */
+
+  :root{
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --bg-softer: #1c2128;
+    --text: #c9d1d9;
+    --text-dim: #6e7681;
+    --accent: #58a6ff;
+    --accent-dim: #1f6feb;
+    --line: rgba(201,209,217,0.12);
+    --danger: #f85149;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0;
+    height:100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  body{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- écran mot de passe ---------- */
+  .gate{
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(88,166,255,0.06), transparent 55%),
+      var(--bg);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 6vw;
+    z-index: 50;
+    transition: opacity 0.5s ease;
+  }
+
+  .gate.hidden{
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .lock-icon{
+    width: 44px;
+    height: 44px;
+    margin-bottom: 1.4rem;
+    color: var(--text-dim);
+  }
+
+  .gate-kicker{
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--text-dim);
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+  }
+
+  .gate h2{
+    font-size: clamp(1.4rem, 4vw, 1.9rem);
+    font-weight: 600;
+    margin: 0 0 2rem 0;
+    text-align:center;
+    color: var(--text);
+  }
+
+  .gate form{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 0.9rem;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .gate input{
+    width: 100%;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    color: var(--text);
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    text-align:center;
+  }
+
+  .gate input:focus{
+    outline: none;
+    border-color: var(--accent-dim);
+  }
+
+  .gate button{
+    width:100%;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .gate button:hover{ background: var(--accent); }
+
+  .gate .error{
+    font-size: 0.78rem;
+    color: var(--danger);
+    height: 1rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .gate .error.show{ opacity: 1; }
+
+  .gate.shake form{ animation: shake 0.35s ease; }
+
+  @keyframes shake{
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  /* ---------- barre du haut (façon OS) ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    padding: 0.6rem 1.1rem;
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .topbar .user{
+    display:flex;
+    align-items:center;
+    gap: 0.5rem;
+    color: var(--text);
+  }
+
+  .dot{
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #3fb950;
+    display:inline-block;
+  }
+
+  /* ---------- bureau : dossiers ---------- */
+  .desktop{
+    flex: 1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding: 6vh 6vw;
+  }
+
+  .desktop-title{
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 0 0 2.4rem 0;
+  }
+
+  .folders{
+    display:flex;
+    gap: 1.4rem;
+    flex-wrap: wrap;
+    justify-content:center;
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .folder{
+    flex: 1 1 160px;
+    max-width: 190px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1.6rem 1.2rem;
+    cursor: pointer;
+    text-align:center;
+    transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    color: var(--text);
+    font-family: inherit;
+  }
+
+  .folder:hover{
+    border-color: var(--accent-dim);
+    transform: translateY(-2px);
+    background: var(--bg-softer);
+  }
+
+  .folder svg{ width: 34px; height: 34px; color: var(--accent); margin-bottom: 0.9rem; }
+
+  .folder .nom-dossier{ font-size: 0.95rem; font-weight: 600; display:block; }
+  .folder .count{ font-size: 0.72rem; color: var(--text-dim); margin-top: 0.3rem; display:block; }
+
+  /* ---------- fenêtre d'un dossier ouvert ---------- */
+  .browser{
+    display:none;
+    width: 100%;
+    max-width: 640px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow:hidden;
+  }
+
+  .browser.open{ display:block; }
+
+  .browser-bar{
+    display:flex;
+    align-items:center;
+    gap: 0.7rem;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-softer);
+  }
+
+  .back-btn{
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--text-dim);
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .back-btn:hover{ color: var(--text); border-color: var(--accent-dim); }
+
+  .browser-title{ font-size: 0.85rem; font-weight: 600; color: var(--text); }
+
+  .file-list{
+    display:flex;
+    flex-direction:column;
+    max-height: 320px;
+    overflow-y:auto;
+  }
+
+  .file-row{
+    display:flex;
+    align-items:center;
+    gap: 0.7rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--line);
+    cursor:pointer;
+    background:none;
+    border-left: none; border-right:none; border-top:none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.88rem;
+    text-align:left;
+    width:100%;
+    transition: background 0.15s ease;
+  }
+
+  .file-row:hover{ background: var(--bg-softer); }
+  .file-row.active{ background: rgba(88,166,255,0.08); color: var(--accent); }
+
+  .file-row svg{ width: 15px; height: 15px; flex-shrink:0; color: var(--text-dim); }
+  .file-row.active svg{ color: var(--accent); }
+
+  .note{
+    border-top: 1px solid var(--line);
+    padding: 1.1rem 1.2rem 1.3rem 1.2rem;
+    background: var(--bg-softer);
+    display:none;
+  }
+
+  .note.show{ display:block; }
+
+  .note .label{
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.5rem 0;
+  }
+
+  .note .texte{
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--text);
+    margin: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .folder, .file-row{ transition: none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="gate" id="gate">
+    <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="4" y="10" width="16" height="10" rx="2"/>
+      <path d="M7 10V7a5 5 0 0 1 10 0v3"/>
+    </svg>
+    <p class="gate-kicker">Ordinateur verrouillé</p>
+    <h2>Session de Rick Michel</h2>
+    <form id="gate-form">
+      <input type="password" id="gate-input" autocomplete="off" placeholder="Mot de passe" inputmode="numeric">
+      <p class="error" id="gate-error">Mot de passe incorrect.</p>
+      <button type="submit">Déverrouiller</button>
+    </form>
+  </div>
+
+  <div class="topbar">
+    <span class="user"><span class="dot"></span> Rick Michel</span>
+    <span>Session active</span>
+  </div>
+
+  <div class="desktop">
+    <p class="desktop-title">Bureau — Rick Michel</p>
+
+    <div class="folders" id="folders"></div>
+
+    <div class="browser" id="browser">
+      <div class="browser-bar">
+        <button class="back-btn" id="back-btn">← Dossiers</button>
+        <span class="browser-title" id="browser-title"></span>
+      </div>
+      <div class="file-list" id="file-list"></div>
+      <div class="note" id="note">
+        <p class="label" id="note-nom"></p>
+        <p class="texte" id="note-texte"></p>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ============================================================
+  //  À MODIFIER : change les valeurs ici.
+  //  Chaque personne a un "nom" et une "info" (la phrase révélée
+  //  au clic). Laisse info: "" si tu n'as pas encore le texte.
+  // ============================================================
+  const dossiers = {
+    "Élèves": [
+      "Zack","Tyler","Maddy","Edgar",
+      "Bingus","Nolan","Angelika","Capucine",
+      "Dingus","Eden","Riju","Evelyne",
+      "Ada","Eimi","Sam","Ero",
+      "Jake","Gabriel","Sucre","Rin",
+      "Eimi","Mauvine","Nate","Theo",
+      "Olivia","Blanche","Albert","Jad",
+      "Freya","Isaac","Evan","Moon",
+      "Isaac","Freak","Amy","Tingus"
+    ].map(nom => ({ nom, info: "" })),
+
+    "Professeurs": [
+      "Mme Cristofeuille","Mr Burritoss","Mr Valmont","Mme Knave",
+      "Mr Duplanty","Mme Ashcroft","Mr Nérulis","Mr Polochon",
+      "Mme Elena","Mme Nicole"
+    ].map(nom => ({ nom, info: "" })),
+
+    "Personnel de l'école": [
+      "Mme Castana","Mme Thorns","Mr Béryl","Mr Benjamin","Mr Dessendre"
+    ].map(nom => ({ nom, info: "" })),
+  };
+
+  // Mot de passe pour déverrouiller le PC
+  const motDePasse = "15051991";
+  // ============================================================
+
+  // ---------- écran mot de passe ----------
+  const gate = document.getElementById('gate');
+  const gateForm = document.getElementById('gate-form');
+  const gateInput = document.getElementById('gate-input');
+  const gateError = document.getElementById('gate-error');
+
+  gateForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (gateInput.value.trim() === motDePasse) {
+      gate.classList.add('hidden');
+      gateError.classList.remove('show');
+    } else {
+      gateError.classList.add('show');
+      gate.classList.remove('shake');
+      void gate.offsetWidth;
+      gate.classList.add('shake');
+      gateInput.value = '';
+      gateInput.focus();
+    }
+  });
+
+  // ---------- bureau / dossiers ----------
+  const foldersEl = document.getElementById('folders');
+  const browserEl = document.getElementById('browser');
+  const fileListEl = document.getElementById('file-list');
+  const browserTitleEl = document.getElementById('browser-title');
+  const backBtn = document.getElementById('back-btn');
+  const noteEl = document.getElementById('note');
+  const noteNomEl = document.getElementById('note-nom');
+  const noteTexteEl = document.getElementById('note-texte');
+
+  const folderIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>`;
+  const fileIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M15 2v5h5"/></svg>`;
+
+  Object.keys(dossiers).forEach(cat => {
+    const f = document.createElement('button');
+    f.className = 'folder';
+    f.innerHTML = `${folderIcon}<span class="nom-dossier">${cat}</span><span class="count">${dossiers[cat].length} fichiers</span>`;
+    f.addEventListener('click', () => openFolder(cat));
+    foldersEl.appendChild(f);
+  });
+
+  backBtn.addEventListener('click', () => {
+    browserEl.classList.remove('open');
+    noteEl.classList.remove('show');
+  });
+
+  function openFolder(cat){
+    browserTitleEl.textContent = cat;
+    fileListEl.innerHTML = '';
+    noteEl.classList.remove('show');
+
+    dossiers[cat].forEach(personne => {
+      const row = document.createElement('button');
+      row.className = 'file-row';
+      row.innerHTML = `${fileIcon}<span>${personne.nom}</span>`;
+      row.addEventListener('click', () => {
+        document.querySelectorAll('.file-row').forEach(r => r.classList.remove('active'));
+        row.classList.add('active');
+        noteNomEl.textContent = personne.nom.toUpperCase();
+        noteTexteEl.textContent = personne.info && personne.info.trim() !== ''
+          ? personne.info
+          : "Aucune information pour le moment.";
+        noteEl.classList.add('show');
+      });
+      fileListEl.appendChild(row);
+    });
+
+    browserEl.classList.add('open');
+  }
+</script>
+
+</body>
+</html>
